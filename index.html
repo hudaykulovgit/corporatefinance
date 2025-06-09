@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Corporate Finance Cheatsheet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 
+        Chosen Palette: Calm Harmony (Stone, Slate, Amber)
+        Application Structure Plan: A two-level navigation system within a dashboard layout. A persistent left sidebar lists main sections (Foundations, TVM, Capital Budgeting, etc.) for non-linear access. The main content area dynamically displays the selected topic, with sub-navigation tabs for granular exploration (e.g., NPV, IRR, Payback within Capital Budgeting). This structure breaks down dense information into manageable, user-selectable chunks, enhancing usability and turning a static document into an explorable tool. Interactive "calculators" are embedded within relevant sections to make abstract formulas tangible and reinforce learning through doing.
+        Visualization & Content Choices: 
+        - Goal: Inform/Clarify (Formulas): Use clear text blocks with interactive calculators (e.g., PV/FV, WACC) to let users manipulate variables and see immediate results, demonstrating the relationships between components. Library: Vanilla JS.
+        - Goal: Compare (Capital Budgeting Projects): Use a dynamic chart and summary cards to visually compare projects like "Sneaker 2013". Interaction: Clicking a project updates the visuals and data, highlighting decision-making conflicts (e.g., NPV vs. IRR). Library: Chart.js.
+        - Goal: Explain (Capital Structure): Use a multi-stage interactive diagram (built with Chart.js and JS-controlled visibility) to illustrate the evolution from M&M theories to the Trade-off theory. This visually simplifies a complex theoretical progression. Library: Chart.js.
+        - Goal: Organize (Governance/Sustainability): Use styled HTML components (cards, accordions) to present comparative information (e.g., different sustainability models) or hierarchical concepts (e.g., Japanese governance systems) in a clean, organized manner. Library/Method: HTML/CSS/JS.
+        CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link.active {
+            background-color: #f59e0b; /* amber-500 */
+            color: white;
+            font-weight: 600;
+        }
+        .sub-nav-link.active {
+            background-color: #fbbf24; /* amber-400 */
+            color: white;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .formula-card {
+            background-color: #f8fafc; /* slate-50 */
+            border-left: 4px solid #f59e0b; /* amber-500 */
+        }
+        .variable-tooltip {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dotted #334155; /* slate-700 */
+        }
+        .variable-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 220px;
+            background-color: #1e293b; /* slate-800 */
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -110px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .variable-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-stone-100 text-slate-800">
+    <div class="flex h-screen">
+        <!-- Sidebar Navigation -->
+        <nav id="main-nav" class="w-64 bg-slate-800 text-white p-4 overflow-y-auto hidden md:block">
+            <h1 class="text-2xl font-bold text-amber-400 mb-6">Corporate Finance</h1>
+            <ul class="space-y-2">
+                <li><a href="#foundations" class="nav-link block p-3 rounded-lg hover:bg-slate-700">Foundations</a></li>
+                <li><a href="#tvm" class="nav-link block p-3 rounded-lg hover:bg-slate-700">Time Value of Money</a></li>
+                <li><a href="#capital-budgeting" class="nav-link block p-3 rounded-lg hover:bg-slate-700">Capital Budgeting</a></li>
+                <li><a href="#capital-structure" class="nav-link block p-3 rounded-lg hover:bg-slate-700">Capital Structure & Cost</a></li>
+                <li><a href="#valuation" class="nav-link block p-3 rounded-lg hover:bg-slate-700">Enterprise Valuation</a></li>
+                <li><a href="#advanced" class="nav-link block p-3 rounded-lg hover:bg-slate-700">Advanced Topics</a></li>
+                <li><a href="#excel-formulas" class="nav-link block p-3 rounded-lg hover:bg-slate-700">Excel Formulas</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+            <button id="menu-toggle" class="md:hidden mb-4 p-2 bg-slate-800 text-white rounded-md">Menu</button>
+            
+            <!-- Foundations Section -->
+            <section id="foundations" class="content-section">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">I. Foundations of Corporate Finance</h2>
+                <p class="mb-6 text-slate-600">This section establishes the fundamental principles that underpin corporate financial analysis. We begin with the primary goal of the firm—maximizing shareholder value—and provide an overview of the four key financial statements that serve as the language of business.</p>
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-2">A. Goal of the Firm: Maximizing Shareholder Value</h3>
+                        <p>In traditional corporate finance, the paramount objective is to maximize the firm's value, which directly translates to maximizing the wealth of its shareholders. Shareholders are the residual claimants, meaning they are paid only after all other stakeholders (creditors, employees, etc.) have been compensated. This focus on shareholder value provides a clear, consistent benchmark for all financial decision-making.</p>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-2">B. Overview of Financial Statements</h3>
+                        <p class="mb-4">Financial statements are the primary tools for understanding a company's financial health. They are interconnected, with changes in one statement affecting the others.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg text-amber-600">Balance Sheet</h4>
+                                <p>A snapshot of a company's financial position at a single point in time.</p>
+                                <div class="mt-2 p-3 formula-card rounded-md">Assets = Liabilities + Equity</div>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg text-amber-600">Income Statement</h4>
+                                <p>Reports financial performance over a specific period (e.g., a quarter or year).</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg text-amber-600">Cash Flow Statement</h4>
+                                <p>Shows how cash moved through the company from operating, investing, and financing activities.</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-lg shadow-sm">
+                                <h4 class="font-bold text-lg text-amber-600">Statement of Shareholders' Equity</h4>
+                                <p>Details the changes in the equity section of the balance sheet over a period.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Time Value of Money Section -->
+            <section id="tvm" class="content-section">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">II. Time Value of Money (TVM)</h2>
+                <p class="mb-6 text-slate-600">The Time Value of Money is a core principle stating that a sum of money today is worth more than the same sum in the future due to its potential earning capacity. This section provides interactive tools to calculate Present Value (PV) and Future Value (FV).</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-4">Present Value (PV) Calculator</h3>
+                        <p class="mb-4">Calculates the current value of a future sum of money.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            PV = FV / (1 + r)<sup>T</sup>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="pv_fv" class="block text-sm font-medium text-slate-700">Future Value (FV)</label>
+                                <input type="number" id="pv_fv" value="1000" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label for="pv_r" class="block text-sm font-medium text-slate-700">Discount Rate (r) in %</label>
+                                <input type="number" id="pv_r" value="5" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label for="pv_t" class="block text-sm font-medium text-slate-700">Number of Periods (T)</label>
+                                <input type="number" id="pv_t" value="10" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                        </div>
+                        <div class="mt-6 text-center">
+                            <span class="text-lg font-medium">Present Value:</span>
+                            <span id="pv_result" class="text-2xl font-bold text-amber-600 ml-2">$613.91</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-4">Future Value (FV) Calculator</h3>
+                        <p class="mb-4">Calculates the value of an asset at a future date.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            FV = PV * (1 + r)<sup>T</sup>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="fv_pv" class="block text-sm font-medium text-slate-700">Present Value (PV)</label>
+                                <input type="number" id="fv_pv" value="1000" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label for="fv_r" class="block text-sm font-medium text-slate-700">Interest Rate (r) in %</label>
+                                <input type="number" id="fv_r" value="5" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label for="fv_t" class="block text-sm font-medium text-slate-700">Number of Periods (T)</label>
+                                <input type="number" id="fv_t" value="10" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                            </div>
+                        </div>
+                        <div class="mt-6 text-center">
+                            <span class="text-lg font-medium">Future Value:</span>
+                            <span id="fv_result" class="text-2xl font-bold text-amber-600 ml-2">$1,628.89</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Capital Budgeting Section -->
+            <section id="capital-budgeting" class="content-section">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">III. Capital Budgeting: Investment Decisions</h2>
+                <p class="mb-6 text-slate-600">Capital budgeting is the process firms use to evaluate major projects and investments. The goal is to select projects that add the most value. Explore the key decision-making tools: Net Present Value (NPV), Internal Rate of Return (IRR), and the Payback Period.</p>
+                <div id="capital-budgeting-nav" class="flex space-x-2 border-b-2 border-slate-200 mb-6">
+                    <button class="sub-nav-link py-2 px-4 font-medium text-slate-600 hover:bg-amber-100 rounded-t-md" data-target="cb-npv">NPV</button>
+                    <button class="sub-nav-link py-2 px-4 font-medium text-slate-600 hover:bg-amber-100 rounded-t-md" data-target="cb-irr">IRR</button>
+                    <button class="sub-nav-link py-2 px-4 font-medium text-slate-600 hover:bg-amber-100 rounded-t-md" data-target="cb-payback">Payback Period</button>
+                </div>
+
+                <div id="cb-npv" class="content-subsection">
+                    <h3 class="text-2xl font-semibold mb-2">Net Present Value (NPV)</h3>
+                    <p class="mb-4">NPV is the gold standard for investment appraisal. It measures the value an investment adds to the firm by calculating the difference between the present value of future cash inflows and the initial investment.</p>
+                    <p class="mb-4"><span class="font-bold">Decision Rule:</span> Accept a project if its NPV is greater than zero (NPV > 0).</p>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h4 class="text-xl font-semibold mb-4">Interactive NPV Calculator</h4>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">NPV = &Sigma; [CF<sub>t</sub> / (1 + r)<sup>t</sup>] - Initial Investment</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="npv_invest" class="block text-sm font-medium text-slate-700">Initial Investment (as positive number)</label>
+                                        <input type="number" id="npv_invest" value="180" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label for="npv_cf" class="block text-sm font-medium text-slate-700">Cash Flows (comma-separated, e.g., 9.5,29.7)</label>
+                                        <textarea id="npv_cf" rows="3" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">9.5, 29.7, 37.27, 41.82, 46.37, 146.62</textarea>
+                                    </div>
+                                    <div>
+                                        <label for="npv_rate" class="block text-sm font-medium text-slate-700">Discount Rate (%)</label>
+                                        <input type="number" id="npv_rate" value="11" class="mt-1 block w-full p-2 border border-slate-300 rounded-md shadow-sm">
+                                    </div>
+                                    <button id="calculate_npv" class="w-full bg-amber-500 text-white font-bold py-2 px-4 rounded-md hover:bg-amber-600">Calculate NPV</button>
+                                </div>
+                                <div class="mt-6 text-center">
+                                    <span class="text-lg font-medium">Net Present Value:</span>
+                                    <span id="npv_result_display" class="text-2xl font-bold text-amber-600 ml-2">$13.36 M</span>
+                                </div>
+                            </div>
+                            <div class="chart-container"><canvas id="npvChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="cb-irr" class="content-subsection hidden">
+                    <h3 class="text-2xl font-semibold mb-2">Internal Rate of Return (IRR)</h3>
+                    <p class="mb-4">IRR is the discount rate at which the NPV of an investment equals zero. It represents the project's expected percentage rate of return.</p>
+                     <p class="mb-4"><span class="font-bold">Decision Rule:</span> Accept a project if its IRR is greater than the company's cost of capital.</p>
+                     <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+                        <p class="font-bold">Caution: IRR Pitfalls</p>
+                        <p>While intuitive, IRR can be misleading when comparing projects of different scales or with unconventional cash flows (e.g., resulting in multiple IRRs). NPV is generally the more reliable metric for value maximization.</p>
+                     </div>
+                     <h4 class="text-xl font-semibold mt-6 mb-2">Formula</h4>
+                     <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                        NPV = &Sigma; [CF<sub>t</sub> / (1 + IRR)<sup>t</sup>] - Initial Investment = 0
+                     </div>
+                     <p class="mb-4 text-slate-600">
+                        The IRR is found by solving this equation for IRR. For projects with multiple cash flows, this typically requires numerical methods (e.g., financial calculator, spreadsheet software) as there is no direct algebraic solution.
+                     </p>
+                     <h4 class="text-xl font-semibold mt-6 mb-2">Example: Sneaker 2013 Project</h4>
+                     <p class="mb-4">Consider the "Sneaker 2013" project with the following cash flows and an initial investment of ($180M):</p>
+                     <div class="overflow-x-auto mb-4">
+                        <table class="min-w-full bg-white border border-slate-300 rounded-lg shadow-sm">
+                            <thead>
+                                <tr class="bg-slate-200">
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-slate-700">Year</th>
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-slate-700">Cash Flow ($M)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="py-2 px-4 border-b text-sm">Initial Investment</td><td class="py-2 px-4 border-b text-sm">$(180)</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2013</td><td class="py-2 px-4 border-b text-sm">$9.50</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2014</td><td class="py-2 px-4 border-b text-sm">$29.70</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2015</td><td class="py-2 px-4 border-b text-sm">$37.27</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2016</td><td class="py-2 px-4 border-b text-sm">$41.82</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2017</td><td class="py-2 px-4 border-b text-sm">$46.37</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2018</td><td class="py-2 px-4 border-b text-sm">$146.62</td></tr>
+                            </tbody>
+                        </table>
+                     </div>
+                     <p class="mb-4 text-slate-600">
+                        For these cash flows, the calculated IRR is <span class="font-bold text-amber-600">12.81%</span>. If the company's cost of capital is 11%, the project would be accepted as its IRR (12.81%) is greater than the cost of capital.
+                     </p>
+                </div>
+
+                <div id="cb-payback" class="content-subsection hidden">
+                     <h3 class="text-2xl font-semibold mb-2">Payback Period</h3>
+                     <p class="mb-4">The Payback Period measures the time it takes for a project to recover its initial investment from its cumulative cash inflows. It's a simple measure of risk and liquidity.</p>
+                     <p class="mb-4"><span class="font-bold">Decision Rule:</span> Accept a project if its payback period is within a pre-determined maximum timeframe.</p>
+                      <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md" role="alert">
+                        <p class="font-bold">Caution: Payback Period Limitations</p>
+                        <p>This method ignores the time value of money and all cash flows that occur after the payback period, potentially leading to the rejection of profitable long-term projects.</p>
+                     </div>
+                     <h4 class="text-xl font-semibold mt-6 mb-2">Calculation Method</h4>
+                     <p class="mb-4">
+                        The payback period is found by summing the annual cash flows until the initial investment is fully recovered. If recovery occurs within a year, the fractional part is calculated as:
+                     </p>
+                     <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                        Payback Period = Last Year Before Full Recovery + (Unrecovered Amount at Last Year / Cash Flow in Recovery Year)
+                     </div>
+                     <h4 class="text-xl font-semibold mt-6 mb-2">Example: Sneaker 2013 Project</h4>
+                     <p class="mb-4">Let's calculate the payback period for the "Sneaker 2013" project with an initial investment of ($180M) and the following annual cash flows:</p>
+                     <div class="overflow-x-auto mb-4">
+                        <table class="min-w-full bg-white border border-slate-300 rounded-lg shadow-sm">
+                            <thead>
+                                <tr class="bg-slate-200">
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-slate-700">Year</th>
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-slate-700">Cash Flow ($M)</th>
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-slate-700">Cumulative Cash Flow ($M)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="py-2 px-4 border-b text-sm">Initial Investment</td><td class="py-2 px-4 border-b text-sm">$(180)</td><td class="py-2 px-4 border-b text-sm">$(180)</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2013</td><td class="py-2 px-4 border-b text-sm">$9.50</td><td class="py-2 px-4 border-b text-sm">$(170.50)</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2014</td><td class="py-2 px-4 border-b text-sm">$29.70</td><td class="py-2 px-4 border-b text-sm">$(140.80)</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2015</td><td class="py-2 px-4 border-b text-sm">$37.27</td><td class="py-2 px-4 border-b text-sm">$(103.53)</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2016</td><td class="py-2 px-4 border-b text-sm">$41.82</td><td class="py-2 px-4 border-b text-sm">$(61.71)</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2017</td><td class="py-2 px-4 border-b text-sm">$46.37</td><td class="py-2 px-4 border-b text-sm">$(15.34)</td></tr>
+                                <tr><td class="py-2 px-4 border-b text-sm">2018</td><td class="py-2 px-4 border-b text-sm">$146.62</td><td class="py-2 px-4 border-b text-sm">$131.28</td></tr>
+                            </tbody>
+                        </table>
+                     </div>
+                     <p class="mb-4 text-slate-600">
+                        The initial investment of $180M is recovered between 2017 (end of year cumulative cash flow is -$15.34M) and 2018.
+                     </p>
+                     <p class="mb-4 text-slate-600">
+                        Payback Period = 5 years (until end of 2017) + ($15.34M unrecovered / $146.62M cash flow in 2018)
+                        <br>
+                        Payback Period ≈ 5 + 0.1046 ≈ <span class="font-bold text-amber-600">5.10 years</span>. (Note: The provided source states 5.12 years; slight differences can occur due to rounding in intermediate steps or original data values.)
+                     </p>
+                </div>
+            </section>
+            
+            <!-- Capital Structure Section -->
+            <section id="capital-structure" class="content-section">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">IV. Capital Structure & Cost of Capital</h2>
+                <p class="mb-6 text-slate-600">This section explores how a firm finances its assets through a mix of debt and equity. We'll examine foundational theories and the calculation of the Weighted Average Cost of Capital (WACC), the firm's overall cost of financing.</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">Capital Structure Theories</h3>
+                        <div id="theory-buttons" class="flex space-x-2 mb-4">
+                            <button class="theory-btn flex-1 p-2 text-sm bg-slate-200 rounded-md" data-theory="mm1">M&M (No Tax)</button>
+                            <button class="theory-btn flex-1 p-2 text-sm bg-slate-200 rounded-md" data-theory="mm2">M&M (With Tax)</button>
+                            <button class="theory-btn flex-1 p-2 text-sm bg-slate-200 rounded-md" data-theory="tradeoff">Trade-off</button>
+                        </div>
+                        <div class="chart-container"><canvas id="capitalStructureChart"></canvas></div>
+                        <div id="theory-explanation" class="mt-4 p-4 bg-slate-50 rounded-md">
+                            <p>Select a theory to see its impact on firm value.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-4">WACC Calculator</h3>
+                        <div class="p-4 formula-card rounded-md mb-4 text-sm md:text-base">
+                            WACC = (E/V) * Re + (D/V) * Rd * (1 - Tc)
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="font-medium">Equity Weight (E/V): <span id="wacc_e_val">70</span>%</label>
+                                <input id="wacc_e" type="range" min="0" max="100" value="70" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="font-medium">Cost of Equity (Re) in %</label>
+                                <input type="number" id="wacc_re" value="10" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                            </div>
+                             <div>
+                                <label class="font-medium">Cost of Debt (Rd) in %</label>
+                                <input type="number" id="wacc_rd" value="5" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                            </div>
+                             <div>
+                                <label class="font-medium">Corporate Tax Rate (Tc) in %</label>
+                                <input type="number" id="wacc_tc" value="35" class="mt-1 block w-full p-2 border border-slate-300 rounded-md">
+                            </div>
+                        </div>
+                        <div class="mt-6 text-center">
+                            <span class="text-lg font-medium">WACC:</span>
+                            <span id="wacc_result" class="text-2xl font-bold text-amber-600 ml-2">7.98 %</span>
+                            <p class="text-sm text-slate-500 mt-2">Debt Weight (D/V): <span id="wacc_d_val">30</span>%</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Enterprise Valuation Section -->
+            <section id="valuation" class="content-section">
+                 <h2 class="text-3xl font-bold mb-4 text-slate-900">V. Enterprise Valuation</h2>
+                 <p class="mb-6 text-slate-600">Enterprise valuation aims to determine the total value of a business. The most theoretically sound method is Discounted Cash Flow (DCF), which values a company based on its ability to generate future cash. Free Cash Flow (FCF) is the primary input for this analysis.</p>
+                 <div class="space-y-8">
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-2">A. Free Cash Flow (FCF)</h3>
+                        <p>FCF is the cash a company generates after accounting for all operating expenses and capital expenditures. It's the cash available to all investors (both debt and equity holders).</p>
+                        <div class="p-4 mt-4 formula-card rounded-md">
+                            FCF = Operating Cash Flow (OCF) - Capital Expenditures (CapEx)
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-semibold mb-2">B. Discounted Cash Flow (DCF) Valuation Steps</h3>
+                        <div class="space-y-4">
+                           <div class="flex items-start">
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold">1</div>
+                                <p class="ml-4">Project future Free Cash Flows (FCF) for an explicit forecast period (e.g., 5-10 years).</p>
+                           </div>
+                           <div class="flex items-start">
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold">2</div>
+                                <p class="ml-4">Calculate the firm's Weighted Average Cost of Capital (WACC) to use as the discount rate.</p>
+                           </div>
+                           <div class="flex items-start">
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold">3</div>
+                                <p class="ml-4">Estimate the <span class="variable-tooltip">Terminal Value (TV)<span class="tooltip-text">The value of the company's cash flows beyond the explicit forecast period, assuming a stable growth rate into perpetuity.</span></span>, which represents the company's value beyond the forecast horizon.</p>
+                           </div>
+                           <div class="flex items-start">
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold">4</div>
+                                <p class="ml-4">Discount the projected FCFs and the Terminal Value back to the present to find the Total Enterprise Value (TEV).</p>
+                           </div>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+            
+            <!-- Advanced Topics Section -->
+            <section id="advanced" class="content-section">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">VI. Advanced & Modern Topics</h2>
+                <p class="mb-6 text-slate-600">Corporate finance is constantly evolving. This section covers topics that address strategic flexibility, corporate governance, and the growing integration of sustainability into financial decision-making.</p>
+                <div id="advanced-nav" class="flex space-x-2 border-b-2 border-slate-200 mb-6">
+                    <button class="sub-nav-link py-2 px-4 font-medium text-slate-600 hover:bg-amber-100 rounded-t-md" data-target="adv-options">Real Options</button>
+                    <button class="sub-nav-link py-2 px-4 font-medium text-slate-600 hover:bg-amber-100 rounded-t-md" data-target="adv-governance">Governance</button>
+                    <button class="sub-nav-link py-2 px-4 font-medium text-slate-600 hover:bg-amber-100 rounded-t-md" data-target="adv-sustainability">Sustainability</button>
+                </div>
+
+                <div id="adv-options" class="content-subsection">
+                    <h3 class="text-2xl font-semibold mb-2">Real Options & Decision Trees</h3>
+                    <p class="mb-4">Traditional NPV analysis is static. Real options analysis values the flexibility managers have to alter projects in response to new information. For example, the option to expand, abandon, or defer an investment adds value. Decision trees are a visual tool used to map out these sequential decisions under uncertainty, helping managers choose the path with the highest expected value.</p>
+                    <h4 class="text-xl font-semibold mt-6 mb-2">Decision Tree Elements and Logic</h4>
+                    <p class="mb-4 text-slate-600">
+                        A decision tree visually maps out sequential decisions and their probabilistic outcomes. Key elements include:
+                    </p>
+                    <ul class="list-disc list-inside space-y-2 mb-4 text-slate-600">
+                        <li><span class="font-bold">Square Node (■):</span> Represents a decision point where a choice must be made.</li>
+                        <li><span class="font-bold">Circle Node (●):</span> Denotes a chance node, where multiple possible outcomes can occur randomly, each with an associated probability.</li>
+                        <li><span class="font-bold">Triangle Node (▲):</span> Indicates possible outcomes or end nodes, representing the final results.</li>
+                    </ul>
+                    <p class="mb-4 text-slate-600">
+                        Valuation using a decision tree involves working backward from the outcomes. At chance nodes, the Expected Value (EV) is calculated:
+                    </p>
+                    <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                        EV = &Sigma; (Probability<sub>i</sub> * Outcome Value<sub>i</sub>)
+                    </div>
+                    <p class="mb-4 text-slate-600">
+                        At decision nodes, the path with the highest expected value (or NPV) is chosen.
+                    </p>
+                    <h4 class="text-xl font-semibold mt-6 mb-2">Example: Drug Development Program</h4>
+                    <p class="mb-4">
+                        Consider a drug development program with a cost of capital of 9.6%:
+                    </p>
+                    <ul class="list-disc list-inside space-y-2 mb-4 text-slate-600">
+                        <li>Initial investment Phase II: $18M (2 years duration, 44% probability of success)</li>
+                        <li>If Phase II successful: further R&D investment of $130M for Phase III (3 years duration)</li>
+                        <li>FDA approval and launch after Phase III: 80% probability</li>
+                        <li>Forecasted PV at launch:
+                            <ul class="list-circle list-inside ml-4">
+                                <li>Upside: $700M (25% probability)</li>
+                                <li>Most Likely: $300M (50% probability)</li>
+                                <li>Downside: $100M (25% probability, assumed to be abandoned if NPV negative, resulting in $0 value from this path)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p class="mb-4 text-slate-600 font-bold">Calculation Steps (Working Backwards):</p>
+                    <ol class="list-decimal list-inside space-y-2 mb-4 text-slate-600">
+                        <li><span class="font-bold">NPV at start of Phase III (if successful, before the $130M investment):</span>
+                            <ul class="list-disc list-inside ml-4">
+                                <li>PV of Upside Launch: $700M / (1.096)<sup>3</sup> ≈ $518.25M</li>
+                                <li>PV of Most Likely Launch: $300M / (1.096)<sup>3</sup> ≈ $222.11M</li>
+                                <li>PV of Downside Launch: $100M / (1.096)<sup>3</sup> ≈ $74.04M (If pursued, NPV would be -$130M + 0.8 * $74.04M = -$69M. Therefore, abandoned, value is $0.)</li>
+                            </ul>
+                        </li>
+                        <li><span class="font-bold">Expected PV of project outcomes (at start of Phase III, considering probabilities):</span>
+                            <ul class="list-disc list-inside ml-4">
+                                <li>Expected PV = (0.25 * ($518.25M - $130M if pursued)) + (0.50 * ($222.11M - $130M if pursued)) + (0.25 * $0 if abandoned)</li>
+                                <li>Expected PV (Adjusted for Phase III investment and FDA probability) = (0.25 * (-$130M + 0.8 * $518.25M)) + (0.50 * (-$130M + 0.8 * $222.11M)) + (0.25 * $0)</li>
+                                <li>Expected PV (Simplified, after FDA decision point) = 0.8 * [(0.25 * $700M) + (0.50 * $300M) + (0.25 * $0M)] = 0.8 * [$175M + $150M + $0M] = 0.8 * $325M = $260M</li>
+                                <li>NPV after Phase III investment (if successful) at time of Phase III decision: Expected PV (at launch, discounted to Phase III start) = (0.25 * $700M + 0.50 * $300M + 0.25 * $100M) = $175M + $150M + $25M = $350M. This is the value at launch.</li>
+                                <li>NPV from Phase III onwards (at start of Phase III): -$130M (investment) + 0.80 * ($350M / (1.096)<sup>3</sup>) = -$130M + 0.80 * ($350M / 1.3175) ≈ -$130M + 0.80 * $265.65M = -$130M + $212.52M = $82.52M</li>
+                                <li>Expected PV from Phase III (considering probability of FDA approval) = 0.8 * (PV at launch, excluding direct Phase III investment if already counted)</li>
+                                <li>Let's use the provided intermediate values to match the source:
+                                    Expected PV at start of Phase III = (0.25 * $295M) + (0.5 * $52M) + (0.25 * $0M) = $73.75M + $26M + $0M = $99.75M.
+                                </li>
+                            </ul>
+                        </li>
+                        <li><span class="font-bold">NPV at the start of Phase II trials:</span>
+                            <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                                NPV = -$18M + 0.44 * (Expected PV at start of Phase III / (1 + 0.096)<sup>2</sup>)
+                            </div>
+                            <ul class="list-disc list-inside ml-4">
+                                <li>NPV = -$18M + 0.44 * ($99.75M / (1.096)<sup>2</sup>)</li>
+                                <li>NPV = -$18M + 0.44 * ($99.75M / 1.2012)</li>
+                                <li>NPV = -$18M + 0.44 * $83.04M</li>
+                                <li>NPV = -$18M + $36.54M ≈ <span class="font-bold text-amber-600">$18.54M</span> (approximately $19M as noted in the source due to rounding)</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p class="mb-4 text-slate-600">
+                        This example demonstrates how decision trees allow valuing complex projects by incorporating sequential decisions, probabilities of outcomes, and managerial options (like abandonment), leading to a more comprehensive NPV analysis.
+                    </p>
+                </div>
+
+                <div id="adv-governance" class="content-subsection hidden">
+                    <h3 class="text-2xl font-semibold mb-2">Corporate Governance</h3>
+                    <p class="mb-4">Corporate governance is the system of rules and practices by which a company is directed and controlled. Its primary goal is to resolve conflicts of interest.</p>
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-xl font-semibold">Principal-Agent Problem</h4>
+                            <p>A conflict of interest between a company's management (the "agent") and its stockholders (the "principal"). Mechanisms like performance-based incentives and board monitoring are used to align interests and reduce "agency costs".</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold">Japanese Governance Model</h4>
+                            <p>Contrasts with Western models by emphasizing long-term relationships and stability, often through structures like the <span class="variable-tooltip">Keiretsu<span class="tooltip-text">Interdependent groups of companies with cross-shareholdings, centered around a main bank.</span></span>, which foster cooperation and insulate firms from hostile takeovers.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="adv-sustainability" class="content-subsection hidden">
+                    <h3 class="text-2xl font-semibold mb-2">Corporate Finance & Sustainability</h3>
+                    <p class="mb-4">This field examines how companies integrate social and environmental factors into their financial decisions. The focus is shifting from a purely shareholder-centric view to a broader stakeholder perspective.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-slate-400">
+                            <h4 class="font-bold text-lg">CSR (Corporate Social Responsibility)</h4>
+                            <p class="text-sm mt-2">A firm's voluntary commitment to ethical behavior and contributing to societal goals. It's often qualitative and internally driven.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-amber-500">
+                            <h4 class="font-bold text-lg">ESG (Environmental, Social, Governance)</h4>
+                            <p class="text-sm mt-2">A quantifiable set of performance indicators used by investors to assess a company's sustainability and risk profile.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-blue-500">
+                            <h4 class="font-bold text-lg">SDGs (Sustainable Development Goals)</h4>
+                            <p class="text-sm mt-2">17 global goals from the UN that provide a universal framework for sustainable development, guiding corporate, investor, and government action.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Excel Formulas Section -->
+            <section id="excel-formulas" class="content-section">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">VII. Essential Corporate Finance Excel Formulas</h2>
+                <p class="mb-6 text-slate-600">This section provides a quick reference for key corporate finance formulas and their corresponding functions in Microsoft Excel, along with practical examples. These functions automate complex calculations, making financial analysis more efficient.</p>
+
+                <div class="space-y-8">
+                    <!-- Present Value (PV) -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Present Value (PV)</h3>
+                        <p class="mb-2">Calculates the current value of a future sum of money or a series of cash flows.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            PV = FV / (1 + r)<sup>T</sup>
+                        </div>
+                        <p class="mb-2"><span class="font-bold">Excel Function:</span> <code class="bg-slate-100 p-1 rounded">PV(rate, nper, pmt, [fv], [type])</code></p>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">rate:</span> The interest rate per period (e.g., 5% or 0.05).</li>
+                            <li><span class="font-bold">nper:</span> The total number of payment periods (e.g., 10 years).</li>
+                            <li><span class="font-bold">pmt:</span> The payment made each period (optional, for annuities; use 0 for single lump sum).</li>
+                            <li><span class="font-bold">[fv]:</span> The future value (optional, use if calculating PV of a lump sum).</li>
+                            <li><span class="font-bold">[type]:</span> When payments are due (0 for end of period, 1 for beginning).</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Example:</span> What is the present value of $1,000 to be received in 10 years, assuming a 5% annual discount rate?</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <code class="block">=PV(0.05, 10, 0, 1000)</code>
+                            <p class="mt-1">Result: -$613.91 (Excel shows negative as it's an inflow to you, outflow from the "system")</p>
+                        </div>
+                    </div>
+
+                    <!-- Future Value (FV) -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Future Value (FV)</h3>
+                        <p class="mb-2">Calculates the value of an investment or cash at a specified date in the future.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            FV = PV * (1 + r)<sup>T</sup>
+                        </div>
+                        <p class="mb-2"><span class="font-bold">Excel Function:</span> <code class="bg-slate-100 p-1 rounded">FV(rate, nper, pmt, [pv], [type])</code></p>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">rate:</span> The interest rate per period.</li>
+                            <li><span class="font-bold">nper:</span> The total number of payment periods.</li>
+                            <li><span class="font-bold">pmt:</span> The payment made each period (optional).</li>
+                            <li><span class="font-bold">[pv]:</span> The present value (optional, use if calculating FV of a lump sum).</li>
+                            <li><span class="font-bold">[type]:</span> When payments are due.</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Example:</span> If you deposit $1,000 today at an annual interest rate of 5%, what will its value be in 10 years?</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <code class="block">=FV(0.05, 10, 0, -1000)</code>
+                            <p class="mt-1">Result: $1,628.89 (Input PV as negative if it's an outflow from your perspective)</p>
+                        </div>
+                    </div>
+
+                    <!-- Net Present Value (NPV) -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Net Present Value (NPV)</h3>
+                        <p class="mb-2">Measures the total value an investment adds to a firm by calculating the difference between the present value of future cash inflows and the initial investment.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            NPV = Initial Investment + &Sigma; [CF<sub>t</sub> / (1 + r)<sup>t</sup>]
+                        </div>
+                        <p class="mb-2"><span class="font-bold">Excel Function:</span> <code class="bg-slate-100 p-1 rounded">NPV(rate, value1, [value2], ...)</code> (for future cash flows only, initial investment added separately) <br> OR <code class="bg-slate-100 p-1 rounded">XNPV(rate, values, dates)</code> (for irregular cash flows)</p>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">rate:</span> The discount rate.</li>
+                            <li><span class="font-bold">value1, [value2], ...:</span> A series of cash flows that occur at regular intervals.</li>
+                            <li><span class="font-bold">values:</span> A series of cash flows that correspond to a schedule of payments.</li>
+                            <li><span class="font-bold">dates:</span> A schedule of payment dates that correspond to the cash flow payments.</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Example:</span> Initial investment of $180M. Cash flows: $9.5M (Year 1), $29.7M (Year 2), $37.27M (Year 3), $41.82M (Year 4), $46.37M (Year 5), $146.62M (Year 6). Discount rate: 11%.</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <p>Assuming cash flows are in cells B2:B7 and rate in A1:</p>
+                            <code class="block">=-180 + NPV(A1, B2, B3, B4, B5, B6, B7)</code> <br>
+                            <p class="mt-1">Result: ~$13.36M</p>
+                        </div>
+                    </div>
+
+                    <!-- Internal Rate of Return (IRR) -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Internal Rate of Return (IRR)</h3>
+                        <p class="mb-2">The discount rate that makes the Net Present Value (NPV) of all cash flows (both positive and negative) from a particular investment equal to zero.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            NPV = &Sigma; [CF<sub>t</sub> / (1 + IRR)<sup>t</sup>] - Initial Investment = 0
+                        </div>
+                        <p class="mb-2"><span class="font-bold">Excel Function:</span> <code class="bg-slate-100 p-1 rounded">IRR(values, [guess])</code> <br> OR <code class="bg-slate-100 p-1 rounded">XIRR(values, dates, [guess])</code> (for irregular cash flows)</p>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">values:</span> A series of cash flows. The first value must be an initial investment (negative), and subsequent values are positive inflows.</li>
+                            <li><span class="font-bold">[guess]:</span> An optional guess for the IRR.</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Example:</span> Initial investment ($180M). Cash flows: $9.5M, $29.7M, $37.27M, $41.82M, $46.37M, $146.62M. (Input cash flows including the negative initial investment in a range, e.g., A1:A7).</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <code class="block">=IRR(A1:A7)</code>
+                            <p class="mt-1">Result: ~12.81%</p>
+                        </div>
+                    </div>
+
+                    <!-- Payback Period -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Payback Period</h3>
+                        <p class="mb-2">The time required for an investment to generate cash flows sufficient to recover its initial cost. This is typically calculated manually or using spreadsheet logic, not a direct Excel function for fractional years.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            Payback Period = Last Year Before Full Recovery + (Unrecovered Amount at Last Year / Cash Flow in Recovery Year)
+                        </div>
+                        <p class="mb-2"><span class="font-bold">Excel Method:</span> Requires setting up a cumulative cash flow column and using IF statements or VLOOKUP/MATCH functions to find the year of recovery.</p>
+                        <p class="mb-2"><span class="font-bold">Example:</span> Initial investment ($180M). Cash flows: Year 1: $9.5M, Year 2: $29.7M, Year 3: $37.27M, Year 4: $41.82M, Year 5: $46.37M, Year 6: $146.62M.</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <p>Manual calculation in Excel:</p>
+                            <p>1. Create a column for Cash Flows and another for Cumulative Cash Flows.</p>
+                            <p>2. Find the year where cumulative cash flow first turns positive.</p>
+                            <p>3. Apply the formula.</p>
+                            <p class="mt-1">Result: ~5.10 years</p>
+                        </div>
+                    </div>
+
+                    <!-- Weighted Average Cost of Capital (WACC) -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Weighted Average Cost of Capital (WACC)</h3>
+                        <p class="mb-2">Represents the average rate of return a company expects to pay to all its different security holders (debt and equity) to finance its assets.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            WACC = (D / (D + E)) * Kd * (1 - t) + (E / (D + E)) * Ke
+                        </div>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">D:</span> Market value of Debt.</li>
+                            <li><span class="font-bold">E:</span> Market value of Equity.</li>
+                            <li><span class="font-bold">Kd:</span> Cost of debt.</li>
+                            <li><span class="font-bold">Ke:</span> Cost of equity.</li>
+                            <li><span class="font-bold">t:</span> Corporate tax rate.</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Excel Method:</span> Calculate each component separately and then sum them up.</p>
+                        <p class="mb-2"><span class="font-bold">Example:</span> Market Value of Equity = $700M, Market Value of Debt = $300M, Cost of Equity = 10%, Cost of Debt = 5%, Tax Rate = 35%.</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <code class="block">=(700/(700+300))*0.10 + (300/(700+300))*0.05*(1-0.35)</code>
+                            <p class="mt-1">Result: ~7.98%</p>
+                        </div>
+                    </div>
+
+                    <!-- Cost of Equity (CAPM) -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Cost of Equity (CAPM)</h3>
+                        <p class="mb-2">Calculates the required rate of return for equity investors, based on the Capital Asset Pricing Model (CAPM).</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            E(R<sub>i</sub>) = r<sub>f</sub> + β<sub>i</sub> * (E(R<sub>M</sub>) - r<sub>f</sub>)
+                        </div>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">E(R<sub>i</sub>):</span> Expected return on asset i (Cost of Equity).</li>
+                            <li><span class="font-bold">r<sub>f</sub>:</span> Risk-free rate.</li>
+                            <li><span class="font-bold">E(R<sub>M</sub>) - r<sub>f</sub>:</span> Market risk premium.</li>
+                            <li><span class="font-bold">β<sub>i</sub>:</span> Beta (asset's volatility relative to market).</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Excel Method:</span> Direct calculation.</p>
+                        <p class="mb-2"><span class="font-bold">Example:</span> Risk-free rate = 2.4%, Market Return = 1.2% (Note: Market return less than risk-free rate suggests a simplified example or specific context where premium is negative for a period), Beta = 0.47.</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <code class="block">=0.024 + 0.47 * (0.012 - 0.024)</code>
+                            <p class="mt-1">Result: ~1.836%</p>
+                        </div>
+                    </div>
+
+                    <!-- Free Cash Flow (FCF) -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Free Cash Flow (FCF)</h3>
+                        <p class="mb-2">The cash a company generates after accounting for all operating expenses and necessary capital investments, available to all investors.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            FCF = OCF - CapExp
+                        </div>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">OCF:</span> Operating Cash Flow.</li>
+                            <li><span class="font-bold">CapExp:</span> Capital Expenditures.</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Excel Method:</span> Calculate OCF and CapEx from financial statements and then subtract.</p>
+                        <p class="mb-2"><span class="font-bold">Example:</span> Company has OCF of $250,000 and Capital Expenditures of $100,000.</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <code class="block">=250000 - 100000</code>
+                            <p class="mt-1">Result: $150,000</p>
+                        </div>
+                    </div>
+
+                    <!-- Terminal Value (TV) -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">Terminal Value (TV) - Perpetuity Growth Model</h3>
+                        <p class="mb-2">Estimates the value of a company's cash flows beyond an explicit forecast period, assuming a constant growth rate into perpetuity.</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            TV = (FCF<sub>n</sub> * (1 + g)) / (k - g)
+                        </div>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">FCF<sub>n</sub>:</span> Free Cash Flow in the final year of the explicit forecast.</li>
+                            <li><span class="font-bold">g:</span> Perpetual growth rate of FCF.</li>
+                            <li><span class="font-bold">k:</span> Discount rate (WACC).</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Excel Method:</span> Direct calculation.</p>
+                        <p class="mb-2"><span class="font-bold">Example:</span> FCF in final year = $616,904.5, WACC = 8%, perpetual growth rate = 3%.</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <code class="block">=(616904.5 * (1 + 0.03)) / (0.08 - 0.03)</code>
+                            <p class="mt-1">Result: ~$12,757,323.10</p>
+                        </div>
+                    </div>
+
+                    <!-- EBITDA Multiples -->
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-semibold mb-2">EBITDA Multiples</h3>
+                        <p class="mb-2">A valuation metric comparing a company's Total Enterprise Value (TEV) to its Earnings Before Interest, Tax, Depreciation, and Amortization (EBITDA).</p>
+                        <div class="p-4 formula-card rounded-md mb-4 text-center text-lg">
+                            EBITDA Multiples = TEV / EBITDA
+                        </div>
+                        <ul class="list-disc list-inside ml-4 text-slate-600 mb-4">
+                            <li><span class="font-bold">TEV:</span> Total Enterprise Value (Market Cap + Debt + Minority Interest + Preferred Shares - Cash).</li>
+                            <li><span class="font-bold">EBITDA:</span> Earnings Before Interest, Tax, Depreciation, and Amortization.</li>
+                        </ul>
+                        <p class="mb-2"><span class="font-bold">Excel Method:</span> Calculate TEV and EBITDA, then divide.</p>
+                        <p class="mb-2"><span class="font-bold">Example:</span> TEV = $70.4B, EBITDA = $5.04B.</p>
+                        <div class="bg-slate-50 p-3 rounded-md text-slate-700">
+                            <code class="block">=70.4 / 5.04</code>
+                            <p class="mt-1">Result: ~14.0x</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mainNavLinks = document.querySelectorAll('#main-nav .nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+            const menuToggle = document.getElementById('menu-toggle');
+            const mainNav = document.getElementById('main-nav');
+
+            menuToggle.addEventListener('click', () => {
+                mainNav.classList.toggle('hidden');
+            });
+            
+            function navigate() {
+                const hash = window.location.hash || '#foundations';
+                
+                contentSections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                mainNavLinks.forEach(link => {
+                    link.classList.remove('active');
+                });
+                
+                const activeSection = document.querySelector(hash);
+                const activeLink = document.querySelector(`a[href="${hash}"]`);
+
+                if (activeSection) {
+                    activeSection.classList.add('active');
+                    if (activeLink) activeLink.classList.add('active');
+                    
+                    const subNavContainer = activeSection.querySelector('.flex.space-x-2.border-b-2');
+                    if (subNavContainer) {
+                        const firstSubNavLink = subNavContainer.querySelector('.sub-nav-link');
+                        // Activate the first sub-navigation link if it exists and no specific sub-tab is in hash
+                        if(firstSubNavLink && !window.location.hash.includes('-')) {
+                            firstSubNavLink.click();
+                        } else if (window.location.hash.includes('-')) {
+                             const subTabId = window.location.hash.substring(1); // Remove '#'
+                             const subTabButton = document.querySelector(`.sub-nav-link[data-target="${subTabId}"]`);
+                             if (subTabButton) {
+                                 subTabButton.click();
+                             } else {
+                                 firstSubNavLink.click(); // Fallback if sub-tab not found
+                             }
+                        }
+                    }
+                }
+            }
+
+            window.addEventListener('hashchange', navigate);
+            navigate(); 
+
+            document.querySelectorAll('.sub-nav-link').forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.dataset.target;
+                    const parentSection = button.closest('.content-section');
+                    
+                    parentSection.querySelectorAll('.sub-nav-link').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    parentSection.querySelectorAll('.content-subsection').forEach(subsection => {
+                        subsection.classList.add('hidden');
+                    });
+                    
+                    document.getElementById(targetId).classList.remove('hidden');
+                });
+            });
+
+            // PV Calculator
+            const pv_fv = document.getElementById('pv_fv');
+            const pv_r = document.getElementById('pv_r');
+            const pv_t = document.getElementById('pv_t');
+            const pv_result = document.getElementById('pv_result');
+
+            function calculatePV() {
+                const fv = parseFloat(pv_fv.value);
+                const r = parseFloat(pv_r.value) / 100;
+                const t = parseFloat(pv_t.value);
+                if (!isNaN(fv) && !isNaN(r) && !isNaN(t) && r > -1) {
+                    const pv = fv / Math.pow(1 + r, t);
+                    pv_result.textContent = `$${pv.toFixed(2)}`;
+                }
+            }
+            [pv_fv, pv_r, pv_t].forEach(el => el.addEventListener('input', calculatePV));
+            calculatePV();
+
+            // FV Calculator
+            const fv_pv = document.getElementById('fv_pv');
+            const fv_r = document.getElementById('fv_r');
+            const fv_t = document.getElementById('fv_t');
+            const fv_result = document.getElementById('fv_result');
+
+            function calculateFV() {
+                const pv = parseFloat(fv_pv.value);
+                const r = parseFloat(fv_r.value) / 100;
+                const t = parseFloat(fv_t.value);
+                if (!isNaN(pv) && !isNaN(r) && !isNaN(t)) {
+                    const fv = pv * Math.pow(1 + r, t);
+                    fv_result.textContent = `$${fv.toFixed(2)}`;
+                }
+            }
+            [fv_pv, fv_r, fv_t].forEach(el => el.addEventListener('input', calculateFV));
+            calculateFV();
+            
+            // NPV Calculator & Chart
+            const calculateNpvBtn = document.getElementById('calculate_npv');
+            const npvInvestEl = document.getElementById('npv_invest');
+            const npvCfEl = document.getElementById('npv_cf');
+            const npvRateEl = document.getElementById('npv_rate');
+            const npvResultDisplay = document.getElementById('npv_result_display');
+            let npvChart = null;
+
+            function calculateNPV() {
+                const initialInvestment = parseFloat(npvInvestEl.value);
+                const cashFlowsStr = npvCfEl.value.split(',').map(s => s.trim());
+                const cashFlows = cashFlowsStr.map(s => parseFloat(s)).filter(n => !isNaN(n));
+                const rate = parseFloat(npvRateEl.value) / 100;
+
+                if (isNaN(initialInvestment) || isNaN(rate) || cashFlows.length === 0) {
+                    npvResultDisplay.textContent = 'Invalid Input';
+                    return;
+                }
+
+                let npv = -initialInvestment;
+                const discountedCfs = [];
+                cashFlows.forEach((cf, i) => {
+                    const discountedCf = cf / Math.pow(1 + rate, i + 1);
+                    npv += discountedCf;
+                    discountedCfs.push(discountedCf);
+                });
+                npvResultDisplay.textContent = `$${npv.toFixed(2)} M`;
+                updateNpvChart(initialInvestment, discountedCfs);
+            }
+
+            function updateNpvChart(initialInvestment, discountedCfs) {
+                const ctx = document.getElementById('npvChart').getContext('2d');
+                const labels = ['Investment', ...discountedCfs.map((_, i) => `Year ${i+1}`)];
+                const data = [-initialInvestment, ...discountedCfs];
+                
+                if (npvChart) {
+                    npvChart.destroy();
+                }
+                npvChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Discounted Cash Flow ($M)',
+                            data: data,
+                            backgroundColor: data.map(v => v < 0 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(59, 130, 246, 0.6)'),
+                            borderColor: data.map(v => v < 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(59, 130, 246, 1)'),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Project Discounted Cash Flows' }
+                        },
+                        scales: { y: { beginAtZero: false } }
+                    }
+                });
+            }
+
+            calculateNpvBtn.addEventListener('click', calculateNPV);
+            calculateNPV();
+
+            // Capital Structure Chart
+            let capitalStructureChart = null;
+            const theoryExplanation = document.getElementById('theory-explanation');
+
+            const theories = {
+                mm1: {
+                    label: 'M&M (No Tax): Firm value is unaffected by leverage',
+                    data: [100, 100, 100, 100, 100, 100],
+                    explanation: "In a world with no taxes, Modigliani & Miller proved that a firm's value is independent of its capital structure. How you slice the pie between debt and equity doesn't change the size of the pie."
+                },
+                mm2: {
+                    label: 'M&M (With Tax): Value increases with leverage due to tax shield',
+                    data: [100, 105, 110, 115, 120, 125],
+                    explanation: "Once we introduce corporate taxes, debt becomes valuable. Interest payments are tax-deductible, creating a 'tax shield' that increases the total value of the firm as it takes on more debt."
+                },
+                tradeoff: {
+                    label: 'Trade-off: Value maximized by balancing tax shield and distress costs',
+                    data: [100, 112, 118, 120, 115, 105],
+                    explanation: "The Trade-off theory is more realistic. While debt adds value via the tax shield, too much debt increases the risk and potential costs of financial distress (e.g., bankruptcy). Firms aim for an optimal debt level that balances these two forces."
+                }
+            };
+
+            function createCapitalStructureChart(theoryKey) {
+                const ctx = document.getElementById('capitalStructureChart').getContext('2d');
+                const theory = theories[theoryKey];
+                theoryExplanation.innerHTML = `<p class="font-bold">${theory.label}</p><p class="mt-2 text-sm">${theory.explanation}</p>`;
+
+                if (capitalStructureChart) {
+                    capitalStructureChart.destroy();
+                }
+
+                capitalStructureChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['0%', '20%', '40%', '60%', '80%', '100%'],
+                        datasets: [{
+                            label: 'Firm Value',
+                            data: theory.data,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Impact of Leverage on Firm Value' }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Debt Level' } },
+                            y: { title: { display: true, text: 'Firm Value' } }
+                        }
+                    }
+                });
+            }
+
+            document.querySelectorAll('.theory-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.theory-btn').forEach(b => b.classList.remove('bg-amber-400', 'text-white'));
+                    e.target.classList.add('bg-amber-400', 'text-white');
+                    createCapitalStructureChart(e.target.dataset.theory);
+                });
+            });
+            createCapitalStructureChart('mm1');
+            document.querySelector('.theory-btn[data-theory="mm1"]').classList.add('bg-amber-400', 'text-white');
+
+            // WACC Calculator
+            const wacc_e_slider = document.getElementById('wacc_e');
+            const wacc_re_input = document.getElementById('wacc_re');
+            const wacc_rd_input = document.getElementById('wacc_rd');
+            const wacc_tc_input = document.getElementById('wacc_tc');
+            const wacc_result = document.getElementById('wacc_result');
+            const wacc_e_val = document.getElementById('wacc_e_val');
+            const wacc_d_val = document.getElementById('wacc_d_val');
+            
+            function calculateWACC() {
+                const We = parseFloat(wacc_e_slider.value) / 100;
+                const Wd = 1 - We;
+                const Re = parseFloat(wacc_re_input.value) / 100;
+                const Rd = parseFloat(wacc_rd_input.value) / 100;
+                const Tc = parseFloat(wacc_tc_input.value) / 100;
+
+                if([We, Wd, Re, Rd, Tc].some(isNaN)) return;
+
+                const wacc = (We * Re) + (Wd * Rd * (1 - Tc));
+                wacc_result.textContent = `${(wacc * 100).toFixed(2)} %`;
+                wacc_e_val.textContent = (We * 100).toFixed(0);
+                wacc_d_val.textContent = (Wd * 100).toFixed(0);
+            }
+            [wacc_e_slider, wacc_re_input, wacc_rd_input, wacc_tc_input].forEach(el => el.addEventListener('input', calculateWACC));
+            calculateWACC();
+        });
+    </script>
+</body>
+</html>
